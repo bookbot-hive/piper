@@ -17,8 +17,6 @@ class PhonemeType(str, Enum):
     TEXT = "text"
     """Phonemes come from text itself"""
 
-    BAHASA = "bahasa"
-
 
 MAX_PHONEMES = 256
 DEFAULT_PHONEME_ID_MAP: Dict[str, List[int]] = {
@@ -184,6 +182,48 @@ PHONEME_MAPS = {
 }
 
 ALPHABETS = {
+    "id": {
+        "_": [0],
+        "^": [1],
+        "$": [2],
+        ";": [3],
+        ":": [4],
+        ",": [5],
+        ".": [6],
+        "!": [7],
+        "?": [8],
+        " ": [9],
+        "a": [10],
+        "b": [11],
+        "tʃ": [12],
+        "d": [13],
+        "e": [14],
+        "f": [15],
+        "ɡ": [16],
+        "h": [17],
+        "i": [18],
+        "dʒ": [19],
+        "k": [20],
+        "l": [21],
+        "m": [22],
+        "n": [23],
+        "o": [24],
+        "p": [25],
+        "r": [26],
+        "s": [27],
+        "t": [28],
+        "u": [29],
+        "v": [30],
+        "w": [31],
+        "j": [32],
+        "z": [33],
+        "ŋ": [34],
+        "ə": [35],
+        "ɲ": [36],
+        "ʃ": [37],
+        "x": [38],
+        "ʔ": [39],
+    },
     # Ukrainian
     "uk": {
         "_": [0],
@@ -235,51 +275,7 @@ ALPHABETS = {
         "\u0306": [46],  # combining breve
         "\u0308": [47],  # combining diaeresis
         "—": [48],  # em dash
-    }
-}
-
-
-INDO_ALPHABETS = {
-    "_": [0],
-    "^": [1],
-    "$": [2],
-    ";": [3],
-    ":": [4],
-    ",": [5],
-    ".": [6],
-    "!": [7],
-    "?": [8],
-    " ": [9],
-    "a": [10],
-    "b": [11],
-    "tʃ": [12],
-    "d": [13],
-    "e": [14],
-    "f": [15],
-    "ɡ": [16],
-    "h": [17],
-    "i": [18],
-    "dʒ": [19],
-    "k": [20],
-    "l": [21],
-    "m": [22],
-    "n": [23],
-    "o": [24],
-    "p": [25],
-    "r": [26],
-    "s": [27],
-    "t": [28],
-    "u": [29],
-    "v": [30],
-    "w": [31],
-    "j": [32],
-    "z": [33],
-    "ŋ": [34],
-    "ə": [35],
-    "ɲ": [36],
-    "ʃ": [37],
-    "x": [38],
-    "ʔ": [39],
+    },
 }
 
 
@@ -376,9 +372,8 @@ def main() -> None:
     if args.phoneme_type == PhonemeType.TEXT:
         # Use text directly
         phoneme_id_map = ALPHABETS[args.language]
-    elif args.phoneme_type == PhonemeType.BAHASA:
-        phonemizer = G2p()
-        phoneme_id_map = INDO_ALPHABETS
+        if args.language == "id":
+            phonemizer = G2p()
     else:
         # Use eSpeak
         phonemizer = Phonemizer(args.language)
@@ -392,12 +387,12 @@ def main() -> None:
         if not line:
             continue
 
-        if args.phoneme_type == PhonemeType.TEXT:
-            phonemes = list(unicodedata.normalize("NFD", casing(line)))
-        elif args.phoneme_type == PhonemeType.BAHASA:
+        if args.phoneme_type == PhonemeType.TEXT and args.language == "id":
             phonemes = phonemizer(line)
             phonemes = "# #".join(["#".join(phn) for phn in phonemes])
             phonemes = phonemes.split("#")
+        elif args.phoneme_type == PhonemeType.TEXT:
+            phonemes = list(unicodedata.normalize("NFD", casing(line)))
         else:
             assert phonemizer is not None
             phonemes = phonemize(line, phonemizer, phoneme_map=phoneme_map)

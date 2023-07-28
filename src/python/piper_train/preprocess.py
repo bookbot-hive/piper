@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 from espeak_phonemizer import Phonemizer
+from g2p_id import G2p
 
 from .norm_audio import cache_norm_audio, make_silence_detector
 from .phonemize import (
@@ -174,7 +175,9 @@ def main() -> None:
     queue_out: "Queue[Optional[Utterance]]" = Queue()
 
     # Start workers
-    if args.phoneme_type == PhonemeType.TEXT:
+    if args.phoneme_type == PhonemeType.TEXT and args.language == "id":
+        target = phonemize_batch_indonesian
+    elif args.phoneme_type == PhonemeType.TEXT:
         target = phonemize_batch_text
     else:
         target = phonemize_batch_espeak
@@ -309,6 +312,50 @@ def phonemize_batch_text(
                 try:
                     _LOGGER.debug(utt)
                     utt.phonemes = list(unicodedata.normalize("NFD", casing(utt.text)))
+                    utt.phoneme_ids = phonemes_to_ids(
+                        utt.phonemes,
+                        phoneme_id_map=alphabet,
+                        missing_phonemes=utt.missing_phonemes,
+                    )
+                    if not args.skip_audio:
+                        utt.audio_norm_path, utt.audio_spec_path = cache_norm_audio(
+                            utt.audio_path,
+                            args.cache_dir,
+                            silence_detector,
+                            args.sample_rate,
+                        )
+                    queue_out.put(utt)
+                except TimeoutError:
+                    _LOGGER.error("Skipping utterance due to timeout: %s", utt)
+                except Exception:
+                    _LOGGER.exception("Failed to process utterance: %s", utt)
+                    queue_out.put(None)
+
+            queue_in.task_done()
+    except Exception:
+        _LOGGER.exception("phonemize_batch_text")
+
+
+def phonemize_batch_indonesian(
+    args: argparse.Namespace, queue_in: JoinableQueue, queue_out: Queue
+):
+    try:
+        casing = get_text_casing(args.text_casing)
+        silence_detector = make_silence_detector()
+        phonemizer = G2p()
+        alphabet = ALPHABETS[args.language]
+
+        while True:
+            utt_batch = queue_in.get()
+            if utt_batch is None:
+                break
+
+            for utt in utt_batch:
+                try:
+                    _LOGGER.debug(utt)
+                    phonemes = phonemizer(utt.text)
+                    phonemes = "# #".join(["#".join(phn) for phn in phonemes])
+                    utt.phonemes = phonemes.split("#")
                     utt.phoneme_ids = phonemes_to_ids(
                         utt.phonemes,
                         phoneme_id_map=alphabet,
