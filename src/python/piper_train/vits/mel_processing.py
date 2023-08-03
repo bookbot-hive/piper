@@ -1,5 +1,6 @@
 import torch
 import torch.utils.data
+from torch.cuda.amp import autocast
 from librosa.filters import mel as librosa_mel_fn
 
 MAX_WAV_VALUE = 32768.0
@@ -116,20 +117,24 @@ def mel_spectrogram_torch(
         mode="reflect",
     )
     y = y.squeeze(1)
-    spec = torch.view_as_real(
-        torch.stft(
-            y,
-            n_fft,
-            hop_length=hop_size,
-            win_length=win_size,
-            window=hann_window[wnsize_dtype_device],
-            center=center,
-            pad_mode="reflect",
-            normalized=False,
-            onesided=True,
-            return_complex=True,
+
+    # https://github.com/jaywalnut310/vits/issues/15#issuecomment-1084148441
+    with autocast(enabled=False):
+        y = y.float()
+        spec = torch.view_as_real(
+            torch.stft(
+                y,
+                n_fft,
+                hop_length=hop_size,
+                win_length=win_size,
+                window=hann_window[wnsize_dtype_device],
+                center=center,
+                pad_mode="reflect",
+                normalized=False,
+                onesided=True,
+                return_complex=True,
+            )
         )
-    )
 
     spec = torch.sqrt(spec.pow(2).sum(-1) + 1e-6)
 
