@@ -15,6 +15,7 @@ from typing import Dict, Iterable, List, Optional
 
 from espeak_phonemizer import Phonemizer
 from g2p_id import G2p
+from gruut import sentences
 
 from .norm_audio import cache_norm_audio, make_silence_detector
 from .phonemize import (
@@ -175,8 +176,8 @@ def main() -> None:
     queue_out: "Queue[Optional[Utterance]]" = Queue()
 
     # Start workers
-    if args.phoneme_type == PhonemeType.TEXT and args.language == "id":
-        target = phonemize_batch_indonesian
+    if args.phoneme_type == PhonemeType.TEXT and args.language in ["id", "en"]:
+        target = phonemize_batch
     elif args.phoneme_type == PhonemeType.TEXT:
         target = phonemize_batch_text
     else:
@@ -336,13 +337,21 @@ def phonemize_batch_text(
         _LOGGER.exception("phonemize_batch_text")
 
 
-def phonemize_batch_indonesian(
+def phonemize_batch(
     args: argparse.Namespace, queue_in: JoinableQueue, queue_out: Queue
 ):
     try:
-        casing = get_text_casing(args.text_casing)
         silence_detector = make_silence_detector()
-        phonemizer = G2p()
+        if args.language == "id":
+            phonemizer = G2p()
+        elif args.language == "en":
+            phonemizer = lambda s: [
+                [word.text]
+                if word.is_major_break or word.is_minor_break
+                else word.phonemes
+                for words in sentences(s)
+                for word in words
+            ]
         alphabet = ALPHABETS[args.language]
 
         while True:

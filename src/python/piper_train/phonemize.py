@@ -8,6 +8,7 @@ from typing import Dict, Iterable, List, Mapping, Optional
 
 from espeak_phonemizer import Phonemizer
 from g2p_id import G2p
+from gruut import sentences
 
 
 class PhonemeType(str, Enum):
@@ -182,6 +183,88 @@ PHONEME_MAPS = {
 }
 
 ALPHABETS = {
+    "en": {
+        "_": [0],
+        "^": [1],
+        "$": [2],
+        ";": [3],
+        ":": [4],
+        ",": [5],
+        ".": [6],
+        "!": [7],
+        "?": [8],
+        " ": [9],
+        "aɪ": [10],
+        "aʊ": [11],
+        "b": [12],
+        "d": [13],
+        "d͡ʒ": [14],
+        "eɪ": [15],
+        "f": [16],
+        "h": [17],
+        "i": [18],
+        "j": [19],
+        "k": [20],
+        "l": [21],
+        "m": [22],
+        "n": [23],
+        "oʊ": [24],
+        "p": [25],
+        "s": [26],
+        "t": [27],
+        "t͡ʃ": [28],
+        "u": [29],
+        "v": [30],
+        "w": [31],
+        "z": [32],
+        "æ": [33],
+        "ð": [34],
+        "ŋ": [35],
+        "ɑ": [36],
+        "ɔ": [37],
+        "ɔɪ": [38],
+        "ə": [39],
+        "ɚ": [40],
+        "ɛ": [41],
+        "ɡ": [42],
+        "ɪ": [43],
+        "ɹ": [44],
+        "ʃ": [45],
+        "ʊ": [46],
+        "ʌ": [47],
+        "ʒ": [48],
+        "ˈaɪ": [49],
+        "ˈaʊ": [50],
+        "ˈeɪ": [51],
+        "ˈi": [52],
+        "ˈoʊ": [53],
+        "ˈu": [54],
+        "ˈæ": [55],
+        "ˈɑ": [56],
+        "ˈɔ": [57],
+        "ˈɔɪ": [58],
+        "ˈɚ": [59],
+        "ˈɛ": [60],
+        "ˈɪ": [61],
+        "ˈʊ": [62],
+        "ˈʌ": [63],
+        "ˌaɪ": [64],
+        "ˌaʊ": [65],
+        "ˌeɪ": [66],
+        "ˌi": [67],
+        "ˌoʊ": [68],
+        "ˌu": [69],
+        "ˌæ": [70],
+        "ˌɑ": [71],
+        "ˌɔ": [72],
+        "ˌɔɪ": [73],
+        "ˌɚ": [74],
+        "ˌɛ": [75],
+        "ˌɪ": [76],
+        "ˌʊ": [77],
+        "ˌʌ": [78],
+        "θ": [79],
+    },
     "id": {
         "_": [0],
         "^": [1],
@@ -374,6 +457,14 @@ def main() -> None:
         phoneme_id_map = ALPHABETS[args.language]
         if args.language == "id":
             phonemizer = G2p()
+        elif args.language == "en":
+            phonemizer = lambda s: [
+                [word.text]
+                if word.is_major_break or word.is_minor_break
+                else word.phonemes
+                for words in sentences(s)
+                for word in words
+            ]
     else:
         # Use eSpeak
         phonemizer = Phonemizer(args.language)
@@ -387,7 +478,7 @@ def main() -> None:
         if not line:
             continue
 
-        if args.phoneme_type == PhonemeType.TEXT and args.language == "id":
+        if args.phoneme_type == PhonemeType.TEXT and args.language in ["id", "en"]:
             phonemes = phonemizer(line)
             phonemes = "# #".join(["#".join(phn) for phn in phonemes])
             phonemes = phonemes.split("#")
