@@ -20,7 +20,6 @@ from .norm_audio import cache_norm_audio, make_silence_detector
 from .phonemize import (
     ALPHABETS,
     DEFAULT_PHONEME_ID_MAP,
-    MAX_PHONEMES,
     PHONEME_MAPS,
     PhonemeType,
     phonemes_to_ids,
@@ -154,7 +153,7 @@ def main() -> None:
                 "phoneme_id_map": ALPHABETS[args.language]
                 if args.phoneme_type == PhonemeType.TEXT
                 else DEFAULT_PHONEME_ID_MAP,
-                "num_symbols": MAX_PHONEMES,
+                "num_symbols": len(ALPHABETS[args.language]),
                 "num_speakers": len(speaker_counts),
                 "speaker_id_map": speaker_ids,
                 "piper_version": _VERSION,
@@ -360,6 +359,8 @@ def phonemize_batch_indonesian(
                         utt.phonemes,
                         phoneme_id_map=alphabet,
                         missing_phonemes=utt.missing_phonemes,
+                        bos=None,
+                        eos=None,
                     )
                     if not args.skip_audio:
                         utt.audio_norm_path, utt.audio_spec_path = cache_norm_audio(

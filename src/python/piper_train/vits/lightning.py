@@ -160,7 +160,7 @@ class VitsModel(pl.LightningModule):
                 is_multispeaker=self.hparams.num_speakers > 1,
                 segment_size=self.hparams.segment_size,
             ),
-            num_workers=self.hparams.num_workers,
+            num_workers=4,
             batch_size=self.hparams.batch_size,
         )
 
@@ -171,7 +171,7 @@ class VitsModel(pl.LightningModule):
                 is_multispeaker=self.hparams.num_speakers > 1,
                 segment_size=self.hparams.segment_size,
             ),
-            num_workers=self.hparams.num_workers,
+            num_workers=4,
             batch_size=self.hparams.batch_size,
         )
 
@@ -182,7 +182,7 @@ class VitsModel(pl.LightningModule):
                 is_multispeaker=self.hparams.num_speakers > 1,
                 segment_size=self.hparams.segment_size,
             ),
-            num_workers=self.hparams.num_workers,
+            num_workers=1,
             batch_size=self.hparams.batch_size,
         )
 

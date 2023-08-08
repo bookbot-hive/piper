@@ -18,4 +18,4 @@ htmlcov
 .venv/
 lightning_logs/
 id-ID-Althaf/
-exp/
+exp*/

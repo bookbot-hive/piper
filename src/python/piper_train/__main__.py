@@ -34,6 +34,10 @@ def main():
         "--resume_from_single_speaker_checkpoint",
         help="For multi-speaker models only. Converts a single-speaker checkpoint to multi-speaker and resumes training",
     )
+    parser.add_argument(
+        "--bert_path",
+        help="Path to BERT text encoder (e.g. pytorch_model.bin)",
+    )
     Trainer.add_argparse_args(parser)
     VitsModel.add_model_specific_args(parser)
     parser.add_argument("--seed", type=int, default=1234)
@@ -120,6 +124,15 @@ def main():
         _LOGGER.info(
             "Successfully converted single-speaker checkpoint to multi-speaker"
         )
+
+    if args.bert_path:
+        bert_state_dict = torch.load(args.bert_path)
+        # remove prior encoder prefix in key
+        bert_state_dict = {
+            k.replace("enc_p.", ""): v for k, v in bert_state_dict.items()
+        }
+        load_state_dict(model.model_g.enc_p, bert_state_dict)
+        _LOGGER.info("Successfully loaded BERT text encoder")
 
     trainer.fit(model)
 
