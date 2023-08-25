@@ -57,16 +57,15 @@ def main() -> None:
         noise_scale = scales[0]
         length_scale = scales[1]
         noise_scale_w = scales[2]
-        audio = model_g.infer(
+        output = model_g.infer(
             text,
             text_lengths,
             noise_scale=noise_scale,
             length_scale=length_scale,
             noise_scale_w=noise_scale_w,
             sid=sid,
-        )[0].unsqueeze(1)
-
-        return audio
+        )[:2] # Audio, Attention
+        return output[0], output[1], 
 
     model_g.forward = infer_forward
 
@@ -92,11 +91,12 @@ def main() -> None:
         verbose=False,
         opset_version=OPSET_VERSION,
         input_names=["input", "input_lengths", "scales", "sid"],
-        output_names=["output"],
+        output_names=["audio", "attention"],
         dynamic_axes={
             "input": {0: "batch_size", 1: "phonemes"},
             "input_lengths": {0: "batch_size"},
-            "output": {0: "batch_size", 1: "time"},
+            "audio": {0: "batch_size", 1: "time1", 2: "time2"},
+            "attention": {0: "batch_size", 1: "time1", 2: "frames", 3: "phonemes"}
         },
     )
 
