@@ -210,7 +210,7 @@ class VitsModel(pl.LightningModule):
             ids_slice,
             _x_mask,
             z_mask,
-            (_z, z_p, m_p, logs_p, _m_q, logs_q),
+            (_z, z_p, z_r, m_p, logs_p, m_q, logs_q),
         ) = self.model_g(x, x_lengths, spec, spec_lengths, speaker_ids)
         self._y_hat = y_hat
 
@@ -253,10 +253,13 @@ class VitsModel(pl.LightningModule):
             loss_dur = torch.sum(l_length.float())
             loss_mel = F.l1_loss(y_mel, y_hat_mel) * self.hparams.c_mel
             loss_kl = kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * self.hparams.c_kl
+            loss_kl_r = kl_loss(z_r, logs_p, m_q, logs_q, z_mask) * self.hparams.c_kl
 
             loss_fm = feature_loss(fmap_r, fmap_g)
             loss_gen, _losses_gen = generator_loss(y_d_hat_g)
-            loss_gen_all = loss_gen + loss_fm + loss_mel + loss_dur + loss_kl
+            loss_gen_all = (
+                loss_gen + loss_fm + loss_mel + loss_dur + loss_kl + loss_kl_r
+            )
 
             self.log("loss_gen_all", loss_gen_all)
 

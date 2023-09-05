@@ -668,6 +668,11 @@ class SynthesizerTrn(nn.Module):
             z, y_lengths, self.segment_size
         )
         o = self.dec(z_slice, g=g)
+        
+        # naturalspeech bidirectional loss
+        z_r = m_p + torch.randn_like(m_p) * torch.exp(logs_p)
+        z_r = self.flow(z_r, y_mask, g=g, reverse=True)
+        
         return (
             o,
             l_length,
@@ -675,7 +680,7 @@ class SynthesizerTrn(nn.Module):
             ids_slice,
             x_mask,
             y_mask,
-            (z, z_p, m_p, logs_p, m_q, logs_q),
+            (z, z_p, z_r, m_p, logs_p, m_q, logs_q),
         )
 
     def infer(
